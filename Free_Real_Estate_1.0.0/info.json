@@ -1,0 +1,10 @@
+
+{
+	"name": "Free_Real_Estate",
+	"version": "1.0.0",
+	"title": "Free Real Estate",
+	"author": "Sirenfal",
+	"description": "That's a free house for you, Jim.",
+	"dependencies": ["base >= 0.14.0"],
+	"factorio_version": "0.14.0"
+}
