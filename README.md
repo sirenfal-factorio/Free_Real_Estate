@@ -86,6 +86,7 @@ Thanks to...
 - ElfLeaderMike: For helping me test repeatedly
 - MagmaMcFry: The original Factorissimo author, for the idea and the original mod
 - A graphic artist I commissioned to make the factory building model, who has asked to remain anonymous
+- `[10:09:30 PM] Warchamp7: 1. I want credit I probably did something` Yeah, he probably did :D
 
 ## License
 
