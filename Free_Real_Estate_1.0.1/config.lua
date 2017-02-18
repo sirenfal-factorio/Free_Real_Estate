@@ -2,7 +2,7 @@ if not free_real_estate then free_real_estate = {} end
 if not free_real_estate.config then free_real_estate.config = {} end
 
 -- in megawatts
-free_real_estate.config.power_input_per_second = 15
+free_real_estate.config.power_input_per_second = 50
 free_real_estate.config.power_input_multiplier = 0.8
 -- 0: day/night with lamps, 1: always night with lamps, 2: day/night without lamps, 3: always day, 4: always night
 -- changing lamp settings will only apply to new factories, not existing ones

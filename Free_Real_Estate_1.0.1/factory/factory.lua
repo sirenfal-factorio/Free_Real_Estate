@@ -440,62 +440,97 @@ function Factory:cleanup_external(factory)
 	self.entity = nil
 end
 
-function Factory:_remove_players(exit_pos)
-	self.restore = {}
+-- gotcha: player MUST be in this factory, undefined behavior if they aren't
+function Factory:exit_player(p, exit_pos, recurse_up)
+	if(exit_pos == nil) then
+		local exit_factory = self
 
+		if(recurse_up) then
+			while true do
+				local other = global.waypoints:get_tp_pos(exit_factory.transit.exit).data
+
+				if(other == nil) then
+					break
+				else
+					exit_factory = other
+				end
+			end
+		end
+		
+		exit_pos = global.waypoints:get_tp_pos(exit_factory.transit.exit)
+	end
+
+	p.teleport(exit_pos.position, exit_pos.surface)
+
+	if(exit_pos.data ~= nil) then
+		game.raise_event(free_real_estate.events.on_player_entered_factory, {player=p, old_factory=self, factory=exit_pos.data})
+	else
+		game.raise_event(free_real_estate.events.on_player_left_factory, {player=p, factory=self})
+	end
+end
+
+function Factory:remove_players(exit_pos, kill)
 	if(exit_pos == nil) then
 		exit_pos = global.waypoints:get_tp_pos(self.transit.exit)
 	end
 
-	local ret = true
-
 	-- add 2 to bounds because player on the very bottom tile can be slightly outside the radius (width + 0.5)
-
 	for _, entity in pairs(game.surfaces['free_real_estate'].find_entities({
 		{self.alloc.x, self.alloc.y+2},
 		{self.alloc.x+self.alloc.size[1], self.alloc.y+self.alloc.size[2]+2}
 	})) do
 		if(entity.valid) then
-			if(free_real_estate.constants.vehicles[entity.type] ~= nil and entity.passenger ~= nil) then
-				local p = entity.passenger
-				entity.passenger = nil
-				p.player.teleport(exit_pos.position, exit_pos.surface)
+			if(entity.type == 'player') then
+				local p = entity.player
+				self:exit_player(p, exit_pos)
 
-				if(exit_pos.data ~= nil) then
-					game.raise_event(free_real_estate.events.on_player_entered_factory, {player=p.player, old_factory=self, factory=exit_pos.data})
-				else
-					game.raise_event(free_real_estate.events.on_player_left_factory, {player=p.player, factory=self})
+				if(kill and free_real_estate.config.kill_on_destroy) then
+					p.die()
 				end
+			elseif(free_real_estate.constants.vehicles[entity.type] ~= nil and entity.passenger ~= nil and entity.passenger.type == 'player') then
+				local p = entity.passenger.player
+				entity.passenger = nil
+				self:_exit_player(p, exit_pos)
+
+				if(kill and free_real_estate.config.kill_on_destroy) then
+					p.die()
+				end
+			elseif(entity.name == 'fre_factory') then
+				global.factory_entities[entity.unit_number]:remove_players(exit_pos)
+			end
+		end
+	end
+end
+
+function Factory:freeze()
+	self.restore = {}
+
+	local ret = true
+
+	-- add 2 to bounds because player on the very bottom tile can be slightly outside the radius (width + 0.5)
+	for _, entity in pairs(game.surfaces['free_real_estate'].find_entities({
+		{self.alloc.x, self.alloc.y+2},
+		{self.alloc.x+self.alloc.size[1], self.alloc.y+self.alloc.size[2]+2}
+	})) do
+		if(entity.valid and entity.type ~= 'player') then
+			if(free_real_estate.constants.our_entities[entity.name] == nil and free_real_estate.constants.temporary[entity.type] == nil) then
+				-- game.print('type: ' .. entity.type .. ', name: ' .. entity.name)
+				ret = false
 			end
 
-			if(entity.type == 'player') then
-				entity.player.teleport(exit_pos.position, exit_pos.surface)
-
-				if(exit_pos.data ~= nil) then
-					game.raise_event(free_real_estate.events.on_player_entered_factory, {player=entity.player, old_factory=self, factory=exit_pos.data})
-				else
-					game.raise_event(free_real_estate.events.on_player_left_factory, {player=entity.player, factory=self})
-				end
-			else
-				if(free_real_estate.constants.our_entities[entity.name] == nil and free_real_estate.constants.temporary[entity.type] == nil) then
-					game.print('type: ' .. entity.type .. ', name: ' .. entity.name)
-					ret = false
-				end
-
-				if(entity.name == 'fre_factory') then
-					global.factory_entities[entity.unit_number]:_remove_players(exit_pos)
-				-- skip temporary entities, smoke, etc
-				-- these can cause a segfault in 0.14.22 if not skipped
-				elseif(free_real_estate.constants.temporary[entity.type] == nil) then
-					-- disable all entities for performance
-					-- as long as we're here anyway make sure players can't get any of these buildings back somehow if this is actually a
-					-- leaked destroyed factory and they've found a way to get inside it
-					self.restore[entity] = {entity.operable, entity.active, entity.minable, entity.destructible}
-					entity.operable = false
-					entity.active = false
-					entity.minable = false
-					entity.destructible = false
-				end
+			if(entity.name == 'fre_factory') then
+				global.factory_entities[entity.unit_number]:freeze()
+			-- skip temporary entities, smoke, etc
+			-- these can cause a segfault in 0.14.22 if not skipped
+			elseif(free_real_estate.constants.temporary[entity.type] == nil) then
+				-- disable all entities for performance
+				-- as long as we're here anyway make sure players can't get any of these buildings back somehow if this is actually a
+				-- leaked destroyed factory and they've found a way to get inside it
+				self.restore[entity] = {entity.operable, entity.active, entity.minable, entity.destructible}
+				entity.operable = false
+				entity.active = false
+				entity.minable = false
+				entity.destructible = false
 			end
 		end
 	end
@@ -583,31 +618,8 @@ function Factory:_destroy_factory(factory, exit_pos)
 		{self.alloc.x+self.alloc.size[1], self.alloc.y+self.alloc.size[2]+2}
 	})) do
 		if(entity.valid) then
-			if(free_real_estate.constants.vehicles[entity.type] ~= nil and entity.passenger ~= nil) then
-				local p = entity.passenger
-				entity.passenger = nil
-				p.player.teleport(exit_pos.position, exit_pos.surface)
-				game.raise_event(free_real_estate.events.on_player_left_factory, {player=p.player, factory=self})
-
-				-- teleport first to be friendly towards gravestone mod, etc
-				-- don't kill offline players :c
-				if(free_real_estate.config.kill_on_destroy and p.player.connected) then
-					p.player.die()
-				end
-			end
-
-			if(factory ~= nil and entity.type == 'player') then
-				entity.player.teleport(exit_pos.position, exit_pos.surface)
-				game.raise_event(free_real_estate.events.on_player_left_factory, {player=entity.player, factory=self})
-
-				-- teleport first to be friendly towards gravestone mod, etc
-				-- don't kill offline players :c
-				if(free_real_estate.config.kill_on_destroy and entity.player.connected) then
-					entity.player.die()
-				end
-			elseif(entity.name == 'fre_factory') then
-				entity_destroyed(entity, exit_pos)
-				entity.destroy()
+			if(entity.name == 'fre_factory') then
+				global.factory_entities[entity.unit_number]:cleanup_factory(entity, nil, true, exit_pos)
 			else
 				entity.destroy()
 			end
@@ -620,7 +632,7 @@ end
 
 -- miner is either a player or robot who should pick up this factory
 -- if nil the factory is/should be destroyed
-function Factory:cleanup_factory(factory, miner, destroy)
+function Factory:cleanup_factory(factory, miner, destroy, exit_pos)
 	if(factory.name ~= 'fre_factory') then
 		error('what are you even doing with your life')
 		return
@@ -633,7 +645,7 @@ function Factory:cleanup_factory(factory, miner, destroy)
 
 	if(miner ~= nil) then
 		-- check for empty factory, set to normal and free if so
-		local is_empty = self:_remove_players()
+		local is_empty = self:freeze()
 
 		if(is_empty) then
 			local health = factory.health / factory.prototype.max_health
@@ -692,9 +704,11 @@ function Factory:cleanup_factory(factory, miner, destroy)
 
 	local destroyed = false
 
+	self:remove_players(exit_pos, destroy)
+
 	if(destroy == true) then
 		destroyed = true
-		self:_destroy_factory(factory)
+		self:_destroy_factory(factory, exit_pos)
 	end
 
 	global.factory_entities[factory.unit_number] = nil

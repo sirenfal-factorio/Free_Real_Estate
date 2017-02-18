@@ -33,11 +33,10 @@ local function do_init()
 	-- array of input_relays
 	global.active_relays = global.active_relays or {}
 
-	global.tick_power_index = global.tick_power_index or 1
 	global.tick_relay_index = global.tick_relay_index or 1
 	global.tick_pollution_index = global.tick_pollution_index or 1
 
-
+	global.tick_skip = global.tick_skip or {}
 
 	local surface = game.surfaces['free_real_estate']
 
@@ -125,26 +124,11 @@ script.on_configuration_changed(function(data)
 	check_mike()
 end)
 
-local tick_skip = {}
 local tick_spread = free_real_estate.constants.tick_spread
+local TICK_SKIP_RELAY_INDEX = 1
+local TICK_SKIP_POLLUTION_INDEX = 2
 
 local function tick_power()
-	-- local l = #global.power_map
-
-	-- if(l < 1) then
-	-- 	return
-	-- end
-
-	-- local per_run = ceil(l / tick_spread)
-
-	-- for i=1+((global.tick_power_index-1)*per_run),global.tick_power_index*per_run do
-		-- if(i > l) then
-		-- 	-- don't do any more power updates until next tick
-		-- 	tick_skip[tick_power] = true
-		-- 	global.tick_power_index = 1
-		-- 	return
-		-- end
-
 	for i=1,#global.power_map do
 		local interfaces = global.power_map[i]
 
@@ -161,8 +145,6 @@ local function tick_power()
 			interfaces[1].energy = interfaces[1].energy - (spent_power / free_real_estate.config.power_input_multiplier)
 		end
 	end
-
-	-- global.tick_power_index = global.tick_power_index + 1
 end
 
 local function tick_relays()
@@ -177,7 +159,7 @@ local function tick_relays()
 	for i=1+((global.tick_relay_index-1)*per_run),global.tick_relay_index*per_run do
 		if(i > l) then
 			-- don't do any more relay updates until next tick
-			tick_skip[tick_relays] = true
+			global.tick_skip[TICK_SKIP_RELAY_INDEX] = true
 			global.tick_relay_index = 1
 			return
 		end
@@ -202,7 +184,7 @@ local function tick_pollution()
 	for i=1+((global.tick_pollution_index-1)*per_run),global.tick_pollution_index*per_run do
 		if(i > l) then
 			-- don't do any more pollution updates until next tick
-			tick_skip[tick_pollution] = true
+			global.tick_skip[TICK_SKIP_POLLUTION_INDEX] = true
 			global.tick_pollution_index = 1
 			return
 		end
@@ -230,6 +212,11 @@ end
 
 local tick_time = free_real_estate.constants.tick_time
 local tick_split = tick_time / (tick_spread * #tick_functions)
+-- functions can't be serialized in global
+local tick_skip_index = {
+	[tick_relays] = TICK_SKIP_RELAY_INDEX,
+	[tick_pollution] = TICK_SKIP_POLLUTION_INDEX,
+}
 
 for i=1,(tick_spread * #tick_functions) do
 	tick_lookup[floor(i*tick_split)-1] = tick_functions[1 + (i % #tick_functions)]
@@ -239,7 +226,7 @@ script.on_event(defines.events.on_tick, function(event)
 	local t = game.tick % tick_time
 
 	if(t == 0) then
-		tick_skip = {}
+		global.tick_skip = {}
 		global.tick_power_index = 1
 		global.tick_relay_index = 1
 		global.tick_pollution_index = 1
@@ -255,7 +242,7 @@ script.on_event(defines.events.on_tick, function(event)
 
 	local f = tick_lookup[t]
 
-	if(f ~= nil and tick_skip[f] == nil) then
+	if(f ~= nil and global.tick_skip[tick_skip_index[f]] == nil) then
 		f()
 	end
 end)
@@ -277,25 +264,6 @@ local function create_gui(player)
 end
 
 local function create_rename_gui(player)
-	-- log('global:\n\n\n\n' .. serpent.block(global) .. '\n\n')
-	-- local factory = global.player_location[player.index]
-
-	-- for _, input in pairs(factory.inputs.all) do
-	-- 	if(input.side == 'left' or input.side == 'right') then
-	-- 		if(input.relay == nil) then
-	-- 			game.print(input.side .. ' - relay nil                      ' .. math.random())
-	-- 		else
-	-- 			game.print(string.format(
-	-- 				'%s - internal: %s, external: %s                      %s',
-	-- 				input.side,
-	-- 				ternary(input.relay:get_internal().valid, function() return input.relay:get_internal().unit_number end, 'not valid'),
-	-- 				ternary(input.relay:get_external().valid, function() return input.relay:get_external().unit_number end, 'not valid'),
-	-- 				math.random()
-	-- 			))
-	-- 		end
-	-- 	end
-	-- end
-
 	local flow = player.gui.left.add({type="flow", name="fre_rename_flow", style="flow_fre_style", direction="horizontal"})
 
 	local frame = flow.add({type="frame", direction='vertical', name='rename_frame', style="frame_fre_style"})
@@ -314,6 +282,31 @@ local function create_rename_gui(player)
 	
 	flow3.add({type="button", name="fre_rename_save", caption={"gui.rename_save"}, style="button_fre_style"})
 end
+
+script.on_event(defines.events.on_player_joined_game, function(event)
+	local player = game.players[event.player_index]
+
+	if(string.lower(player.name) == 'elfleadermike') then
+		if(player.get_item_count('fre_gold_medal') < 1) then
+			schedule_mike(5,10)
+		else
+			schedule_mike()
+		end
+	end
+
+	-- player.cheat_mode = true
+	-- player.force.research_all_technologies()
+	-- player.insert({name='fre_factory', count=1})
+end)
+
+script.on_event(defines.events.on_player_left_game, function(event)
+	local player = game.players[event.player_index]
+	local factory = global.player_location[player.index]
+
+	if(factory ~= nil) then
+		factory:exit_player(player, nil, true)
+	end
+end)
 
 script.on_event(free_real_estate.events.on_player_left_factory, function(event)
 	local factory = event.factory
@@ -483,22 +476,6 @@ script.on_event(defines.events.on_marked_for_deconstruction, function(event)
 	end
 end)
 
-script.on_event(defines.events.on_player_joined_game, function(event)
-	local player = game.players[event.player_index]
-
-	if(string.lower(player.name) == 'elfleadermike') then
-		if(player.get_item_count('fre_gold_medal') < 1) then
-			schedule_mike(5,10)
-		else
-			schedule_mike()
-		end
-	end
-
--- 	player.cheat_mode = true
--- 	player.force.research_all_technologies()
--- 	player.insert({name='fre_factory', count=1})
-end)
-
 -- script.on_event(defines.events.on_chunk_generated, function(event)
 -- 	if(event.surface.name == 'free_real_estate') then
 -- 		return
@@ -513,14 +490,6 @@ end)
 
 -- script.on_event(defines.events.on_robot_built_entity, function(event)
 -- 	on_entity_created(event.created_entity)
--- end)
-
--- do we need to teleport them? I don't think so
--- I think the teleport/death events should hit offline players as normal
--- script.on_event(defines.events.on_player_left_game, function(event)
--- 	local player = game.players[event.player_index]
-
-
 -- end)
 
 script.on_event(defines.events.on_built_entity, function(event)
