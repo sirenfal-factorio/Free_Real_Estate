@@ -472,9 +472,9 @@ function Factory:_remove_players(exit_pos)
 				entity.player.teleport(exit_pos.position, exit_pos.surface)
 
 				if(exit_pos.data ~= nil) then
-					game.raise_event(free_real_estate.events.on_player_entered_factory, {player=p.player, old_factory=self, factory=exit_pos.data})
+					game.raise_event(free_real_estate.events.on_player_entered_factory, {player=entity.player, old_factory=self, factory=exit_pos.data})
 				else
-					game.raise_event(free_real_estate.events.on_player_left_factory, {player=p.player, factory=self})
+					game.raise_event(free_real_estate.events.on_player_left_factory, {player=entity.player, factory=self})
 				end
 			else
 				if(free_real_estate.constants.our_entities[entity.name] == nil and free_real_estate.constants.temporary[entity.type] == nil) then
