@@ -98,7 +98,7 @@ function ItemRelay:relay()
 	end
 
 	-- if all stack slots are consumed (fastest way to check)
-	if(not self.input.can_insert('fre_factory_transit') or not self.output.can_insert('fre_factory_transit')) then
+	if(not self.output.can_insert('fre_factory_transit')) then
 		return
 	end
 
