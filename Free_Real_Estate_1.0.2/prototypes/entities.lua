@@ -95,7 +95,7 @@ data:extend({
 		type = "electric-energy-interface",
 		name = "fre_power_interface",
 		icon = "__Free_Real_Estate__/graphics/icons/factory.png",
-		collision_box = {{-2.95, -2.95}, {2.95, 2.4}},
+		collision_box = {{-3.45, -3.2}, {3.45, 3.2}},
 		flags = {"not-blueprintable", "not-deconstructable", "not-on-map", "placeable-off-grid"},
 		max_health = 0,
 		minable = nil,
