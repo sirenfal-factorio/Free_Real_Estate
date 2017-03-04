@@ -1,4 +1,4 @@
-# **THIS MOD IS CURRENTLY IN ALPHA AND IS LIKELY TO BREAK YOUR SAVE. DO NOT RUN UNLESS YOU DON'T CARE ABOUT LOSING YOUR MAP OR YOU KNOW WHAT YOU'RE DOING**.
+# **This mod has been tested pretty thoroughly but may still break your save or have other problems since it's new. Please keep backups.**
 
 # General info
 
