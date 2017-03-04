@@ -8,6 +8,14 @@ This is a mod that allows you to build "factory buildings", which are buildings 
 ## Why "free real estate"?
 https://www.youtube.com/watch?v=cd4-UnU8lWY
 
+## Changes for 1.1 (If/when I have time and interest again)
+
+- Logistic input support, in the meantime just use a normal item relay and inserters.
+- Belt inputs; I've figured out a way to do this now but I don't have time to add it.
+- More factory sizes, more complicated production chain to create different kinds of factories. I'm open to suggestions!
+- Power production building, which relays power created from inside to the outside.
+- Icon selection that allows you to set a detail view (alt button) icon on top of the factory outside.
+
 ## IMPORTANT NOTES
 - **Factories are not intended to be placed by construction robots. It should be impossible, but if another mod forces them to be placed expect undefined behavior.**
 - I highly suggest using this with [Bob's Adjustable Inserters](https://mods.factorio.com/mods/Bobingabout/bobinserters) since item throughput is limited by how fast you can put items into and out of chests.
