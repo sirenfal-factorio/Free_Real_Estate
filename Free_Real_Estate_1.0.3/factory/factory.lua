@@ -373,6 +373,7 @@ function Factory:create_external(factory, new, player)
 		position=factory.position,
 		force='neutral',
 	})
+	self.interface.destructible = false
 
 	if(new ~= true) then
 		local mid = self.alloc.x + floor((self.alloc.size[1] - 2) / 2) + 1

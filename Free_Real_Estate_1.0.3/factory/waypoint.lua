@@ -64,12 +64,13 @@ function Waypoint:update_item_pos(transit_id, surface, pos)
 	})
 	ent.destructible = false
 
-	surface.create_entity({
+	local ent = surface.create_entity({
 		name='fre_item-pickup-only',
 		position=pos,
 		force='neutral',
 		stack={name='fre_factory_transit', count=1, health=transit_id},
 	})
+	ent.destructible = false
 end
 
 function Waypoint:update_tp_pos(transit_id, surface, pos)
@@ -88,12 +89,13 @@ function Waypoint:place_world(transit_id)
 	})
 	ent.destructible = false
 
-	info.item_surface.create_entity({
+	local ent = info.item_surface.create_entity({
 		name='fre_item-pickup-only',
 		position=info.item_pos,
 		force='neutral',
 		stack={name='fre_factory_transit', count=1, health=transit_id},
 	})
+	ent.destructible = false
 end
 
 function Waypoint:clear_world(transit_id)
@@ -143,12 +145,13 @@ function Waypoint:teleport(player)
 	inven.remove(item.name)
 	local transit = self.transit_info[transit_id]
 
-	transit.item_surface.create_entity({
+	local ent = transit.item_surface.create_entity({
 		name='fre_item-pickup-only',
 		position=transit.item_pos,
 		force='neutral',
 		stack={name='fre_factory_transit', count=1, health=transit_id},
 	})
+	ent.destructible = false
 
 	player.teleport(transit.tp_pos, transit.tp_surface)
 
