@@ -527,7 +527,7 @@ function Factory:freeze()
 				-- disable all entities for performance
 				-- as long as we're here anyway make sure players can't get any of these buildings back somehow if this is actually a
 				-- leaked destroyed factory and they've found a way to get inside it
-				self.restore[entity] = {entity.operable, entity.active, entity.minable, entity.destructible}
+				table.insert(self.restore,{ent=entity, flags={entity.operable, entity.active, entity.minable, entity.destructible}})
 				entity.operable = false
 				entity.active = false
 				entity.minable = false
@@ -568,13 +568,13 @@ end
 function Factory:restore_entities()
 	local surface = game.surfaces['free_real_estate']
 
-	for entity, flags in pairs(self.restore) do
+	for _, entData in pairs(self.restore) do
 		-- entity can be invalid here if we caught something temporary like smoke
-		if(entity.valid) then
-			entity.operable = flags[1]
-			entity.active = flags[2]
-			entity.minable = flags[3]
-			entity.destructible = flags[4]
+		if(entData.ent.valid) then
+			entData.ent.operable = entData.flags[1]
+			entData.ent.active = entData.flags[2]
+			entData.ent.minable = entData.flags[3]
+			entData.ent.destructible = entData.flags[4]
 		end
 	end
 
