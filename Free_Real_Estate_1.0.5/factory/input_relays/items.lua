@@ -140,6 +140,32 @@ function ItemRelay:relay()
 	end
 end
 
+-- support for bar config
+function ItemRelay:place(t)
+	local new = false
+
+	if(self.input == nil and self.output == nil) then
+		new = true
+	end
+
+	local res = RelayBase.place(self, t)
+
+	if(new == true and res == SUCCESS and free_real_estate.config.item_relay_bar > -1) then
+		for _, inven in pairs({
+			self.input.get_inventory(defines.inventory.chest),
+			self.output.get_inventory(defines.inventory.chest),
+		}) do
+			local slots = #inven
+
+			if(free_real_estate.config.item_relay_bar < slots) then
+				inven.setbar(free_real_estate.config.item_relay_bar)
+			end
+		end
+	end
+
+	return res
+end
+
 -- teleport items on the ground into the chest we're placing
 function ItemRelay:place_external(t)
 	local factory, external_surface, external_pos = 
