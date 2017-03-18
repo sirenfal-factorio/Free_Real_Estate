@@ -151,14 +151,18 @@ function ItemRelay:place(t)
 	local res = RelayBase.place(self, t)
 
 	if(new == true and res == SUCCESS and free_real_estate.config.item_relay_bar > -1) then
-		for _, inven in pairs({
-			self.input.get_inventory(defines.inventory.chest),
-			self.output.get_inventory(defines.inventory.chest),
+		for _, ent in pairs({
+			self.input,
+			self.output,
 		}) do
-			local slots = #inven
+			if(ent ~= nil and ent.valid) then
+				inven = ent.get_inventory(defines.inventory.chest)
 
-			if(free_real_estate.config.item_relay_bar < slots) then
-				inven.setbar(free_real_estate.config.item_relay_bar)
+				local slots = #inven
+
+				if(free_real_estate.config.item_relay_bar < slots) then
+					inven.setbar(free_real_estate.config.item_relay_bar)
+				end
 			end
 		end
 	end
