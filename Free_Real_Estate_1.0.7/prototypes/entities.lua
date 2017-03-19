@@ -44,7 +44,7 @@ data:extend({
 		-- selection_box = {{-3, -3}, {3, 3}},
 		-- collision_box = {{-3.4, -3.4}, {3.4, 3.4}},
 		-- selection_box = {{-3.6, -3.5}, {3.6, 3.9}},
-		collision_box = {{-3.45, -3.2}, {3.45, 3.2}},
+		collision_box = {{-3.45, -3.2}, {3.45, 3.3}},
 		selection_box = {{-3.5, -3.5}, {3.5, 3.5}},
 
 		-- collision_box = {{-3.4, -3}, {3.4, 3}},
@@ -95,7 +95,7 @@ data:extend({
 		type = "electric-energy-interface",
 		name = "fre_power_interface",
 		icon = "__Free_Real_Estate__/graphics/icons/factory.png",
-		collision_box = {{-3.45, -3.2}, {3.45, 3.2}},
+		collision_box = {{-3.45, -3.2}, {3.45, 3.3}},
 		flags = {"not-blueprintable", "not-deconstructable", "not-on-map", "placeable-off-grid"},
 		max_health = 0,
 		minable = nil,
@@ -192,7 +192,17 @@ data:extend({
 	    max_health = 200,
 	    corpse = "small-remnants",
 		collision_box = {{-1.5, -1.5}, {1.5, 1.5}},
-		collision_mask = {"ground-tile", "water-tile", "resource-layer", "floor-layer", "item-layer", "object-layer", "ghost-layer", "doodad-layer"},
+		collision_mask = {
+			-- "ground-tile", "water-tile", "resource-layer", "floor-layer", "item-layer", "object-layer", "ghost-layer", "doodad-layer"
+			-- 'ground-tile',
+			-- 'water-tile',
+			'resource-layer',
+			'floor-layer',
+			'item-layer',
+			'object-layer',
+			-- 'player-layer',
+			'doodad-layer',
+		},
 		-- selection_box = {{-1.5, -1.5}, {1.5, 1.5}},
 		inventory_size = 1,
 		picture = {

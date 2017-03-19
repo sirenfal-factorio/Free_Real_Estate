@@ -101,7 +101,12 @@ end
 function Waypoint:clear_world(transit_id)
 	local info = self.transit_info[transit_id]
 
-	info.item_surface.find_entity('fre_pickup_mask', {info.item_pos.x, info.item_pos.y - 0.5}).destroy()
+	local mask = info.item_surface.find_entity('fre_pickup_mask', {info.item_pos.x, info.item_pos.y - 0.5})
+
+	if(mask ~= nil and mask.valid) then
+		mask.destroy()
+	end
+	
 	info.item_surface.find_entity('fre_item-pickup-only', info.item_pos).destroy()
 end
 
